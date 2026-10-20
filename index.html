@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>ANIMA Kurator</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+      :root {
+        --bg: #f6f5f1;
+        --sf: #fff;
+        --fg: #1c1b19;
+        --mu: #6b6860;
+        --ln: #e3e0d8;
+        --ac: #1f5f4a;
+        --acf: #fff;
+        box-sizing: border-box;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #141413;
+          --sf: #1e1d1b;
+          --fg: #ecebe6;
+          --mu: #9b978d;
+          --ln: #34322d;
+          --ac: #6fcfa8;
+          --acf: #0d1f18;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #141413;
+        --sf: #1e1d1b;
+        --fg: #ecebe6;
+        --mu: #9b978d;
+        --ln: #34322d;
+        --ac: #6fcfa8;
+        --acf: #0d1f18;
+      }
+      html {
+        scroll-padding-top: env(safe-area-inset-top, 0px);
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+      }
+      .card {
+        background: var(--sf);
+        border: 1px solid var(--ln);
+        border-radius: 12px;
+      }
+      .mu {
+        color: var(--mu);
+      }
+      .btn {
+        font: inherit;
+        font-weight: 600;
+        padding: 0.7rem 1rem;
+        border-radius: 10px;
+        border: 1px solid var(--ln);
+        background: var(--sf);
+        color: var(--fg);
+        cursor: pointer;
+      }
+      .btn:hover {
+        border-color: var(--ac);
+      }
+      .btn:focus-visible,
+      .ico:focus-visible {
+        outline: 2px solid var(--ac);
+        outline-offset: 2px;
+      }
+      .btn.pri {
+        background: var(--ac);
+        color: var(--acf);
+        border-color: var(--ac);
+      }
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      .chip {
+        font-size: 0.72rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border: 1px solid var(--ln);
+        border-radius: 999px;
+        padding: 0.15rem 0.6rem;
+      }
+      .ico {
+        border: 1px solid var(--ln);
+        background: none;
+        color: inherit;
+        border-radius: 6px;
+        width: 1.7rem;
+        height: 1.7rem;
+        cursor: pointer;
+      }
+      .paper {
+        background: #fff;
+        color: #1a1a1a;
+        font-family: Georgia, "Times New Roman", serif;
+        padding: 2rem;
+        line-height: 1.6;
+        min-height: 24rem;
+      }
+      .paper h1 {
+        font-size: 2.2rem;
+        letter-spacing: 0.2em;
+        text-align: center;
+        margin: 0;
+      }
+      .paper .sub {
+        text-align: center;
+        font-size: 0.85rem;
+        color: #555;
+        border-bottom: 3px double #1a1a1a;
+        padding-bottom: 0.8rem;
+        margin-bottom: 1.2rem;
+      }
+      .paper h2 {
+        font-size: 0.8rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        border-bottom: 1px solid #1a1a1a;
+        margin: 1.2rem 0 0.6rem;
+        padding-bottom: 0.2rem;
+      }
+      .btn[aria-pressed="true"] {
+        background: var(--ac);
+        color: var(--acf);
+        border-color: var(--ac);
+      }
+      .duo {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 2rem;
+      }
+      .duo > div + div {
+        border-left: 1px solid #ccc;
+        padding-left: 2rem;
+      }
+      .side {
+        font-family: system-ui, sans-serif;
+        font-weight: 700;
+        font-size: 0.72rem;
+        letter-spacing: 0.18em;
+        margin-bottom: 0.6rem;
+      }
+      .emp {
+        color: #999;
+        font-size: 0.85rem;
+        font-style: italic;
+      }
+      .it {
+        break-inside: avoid;
+        margin-bottom: 0.9rem;
+        position: relative;
+      }
+      .it .by {
+        font-family: system-ui, sans-serif;
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #666;
+      }
+      .it .tx {
+        white-space: pre-wrap;
+        outline: none;
+        font-size: 0.95rem;
+      }
+      .it .ctl {
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: flex;
+        gap: 0.2rem;
+      }
+      .it .ico {
+        color: #444;
+        border-color: #ccc;
+        width: 1.5rem;
+        height: 1.5rem;
+        font-size: 0.75rem;
+      }
+      [contenteditable]:focus {
+        background: #fffbe6;
+      }
+      @media (max-width: 640px) {
+        .duo {
+          grid-template-columns: 1fr;
+        }
+        .duo > div + div {
+          border-left: 0;
+          padding-left: 0;
+        }
+        .paper {
+          padding: 1.2rem;
+        }
+      }
+      @media print {
+        :root {
+          padding: 0;
+        }
+        body {
+          background: #fff;
+        }
+        .noprint {
+          display: none !important;
+        }
+        #layout {
+          display: block !important;
+        }
+        .paper {
+          padding: 0;
+          min-height: 0;
+        }
+        .ctl {
+          display: none !important;
+        }
+        @page {
+          size: A4;
+          margin: 16mm;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="mx-auto max-w-6xl p-4 sm:p-6">
+      <header class="noprint flex flex-wrap items-center gap-3 mb-5">
+        <div class="mr-auto">
+          <h1 class="text-lg font-semibold">ANIMA Kurator</h1>
+          <p class="mu text-sm" id="file">
+            Unggah spreadsheet (.xlsx, .xls, .csv) untuk mulai.
+          </p>
+        </div>
+        <label class="btn pri" for="pick">Pilih spreadsheet</label>
+        <input id="pick" type="file" accept=".xlsx,.xls,.csv" class="sr-only" />
+      </header>
+
+      <div
+        id="layout"
+        class="grid gap-5 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]"
+      >
+        <section class="noprint" aria-label="Tinjau pesan">
+          <div id="drop" class="card p-8 text-center mu">
+            Seret berkas ke sini atau gunakan tombol di atas.
+          </div>
+          <div id="rev" class="hidden">
+            <div
+              id="flt"
+              class="flex flex-wrap gap-2 mb-3"
+              role="group"
+              aria-label="Saring grup pesan"
+            ></div>
+            <div class="mu text-sm flex justify-between mb-2">
+              <span id="cnt"></span><span id="sel"></span>
+            </div>
+            <div class="h-1 rounded mb-3" style="background: var(--ln)">
+              <div
+                id="bar"
+                class="h-1 rounded"
+                style="background: var(--ac); width: 0"
+              ></div>
+            </div>
+            <article
+              id="card"
+              class="card p-5 min-h-[14rem]"
+              aria-live="polite"
+            ></article>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+              <button class="btn" id="no">
+                Tidak <span class="mu text-xs">(N)</span>
+              </button>
+              <button class="btn pri" id="yes">
+                Ya <span class="text-xs opacity-80">(Y)</span>
+              </button>
+            </div>
+            <button class="btn w-full mt-3 text-sm" id="undo" disabled>
+              Urungkan (Z)
+            </button>
+          </div>
+        </section>
+
+        <section aria-label="Pratinjau dokumen">
+          <div class="noprint flex flex-wrap items-center gap-2 mb-3">
+            <span class="font-semibold mr-auto">Pratinjau</span>
+            <button class="btn text-sm" id="c1" aria-pressed="false">
+              Bertumpuk
+            </button>
+            <button class="btn text-sm" id="c2" aria-pressed="true">
+              Berdampingan
+            </button>
+            <button class="btn pri text-sm" id="print">
+              Cetak / simpan PDF
+            </button>
+          </div>
+          <div class="card overflow-hidden">
+            <div class="paper" id="paper"></div>
+          </div>
+          <p class="noprint mu text-xs mt-2">
+            Teks di pratinjau bisa diketik ulang langsung. Gunakan panah untuk
+            menggeser urutan.
+          </p>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      const $ = (s) => document.querySelector(s);
+      const h = (t, a = {}, ...k) => {
+        const e = document.createElement(t);
+        for (const [n, v] of Object.entries(a))
+          n.startsWith("on")
+            ? (e[n] = v)
+            : n === "class"
+              ? (e.className = v)
+              : e.setAttribute(n, v);
+        k.flat().forEach((c) => e.append(c));
+        return e;
+      };
+
+      let msgs = [],
+        idx = 0,
+        picked = [],
+        hist = [],
+        cats = [],
+        cols = 2,
+        on = new Set(),
+        seen = new Set();
+      const PARTS = [
+        ["Cerita Biar Kami Merasa", "Pesan"],
+        ["Barang Hilang / Temuan", "Barang Hilang"],
+      ];
+      const head = {
+        title: "ANIMA",
+        sub: "Edisi ke-4 · Kumpulan pesan terpilih",
+      };
+
+      function parse(rows) {
+        const hd = (rows[0] || []).map((x) => String(x ?? "").trim());
+        const tsC = hd.findIndex((x) => /time|tanggal|date/i.test(x));
+        let sC = hd.findIndex((x) =>
+          /aspa|aspi|nama|pengirim|from|asal/i.test(x),
+        );
+        if (sC < 0) sC = hd.findIndex((_, i) => i !== tsC);
+        const mC = hd.map((_, i) => i).filter((i) => i !== tsC && i !== sC);
+        const side = (s) =>
+          /aspi/i.test(s) ? "ASPI" : /aspa/i.test(s) ? "ASPA" : "Lainnya";
+        msgs = [];
+        rows.slice(1).forEach((r, ri) =>
+          mC.forEach((c) => {
+            const t = String(r[c] ?? "").trim(),
+              by = String(r[sC] ?? "").trim() || "Anonim";
+            if (t.replace(/[\s\-–.]/g, ""))
+              msgs.push({
+                id: ri + "-" + c,
+                cat:
+                  (/hilang|temuan|barang/i.test(hd[c])
+                    ? "Barang Hilang "
+                    : "Pesan ") + side(by),
+                by,
+                date: String(r[tsC] ?? "").slice(0, 10),
+                text: t,
+              });
+          }),
+        );
+        cats = PARTS.flatMap(([, k]) =>
+          ["ASPA", "ASPI", "Lainnya"].map((s) => k + " " + s),
+        ).filter((c) => msgs.some((m) => m.cat === c));
+        on = new Set(cats);
+        seen = new Set();
+        picked = [];
+        hist = [];
+        idx = nxt(0);
+        $("#drop").classList.add("hidden");
+        $("#rev").classList.remove("hidden");
+        draw();
+      }
+
+      function load(f) {
+        if (!f) return;
+        $("#file").textContent = f.name;
+        const fr = new FileReader();
+        fr.onload = (e) => {
+          try {
+            const wb = XLSX.read(e.target.result, { type: "array" });
+            parse(
+              XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {
+                header: 1,
+                raw: false,
+                defval: "",
+              }),
+            );
+          } catch (err) {
+            $("#file").textContent = "Gagal membaca berkas: " + err.message;
+          }
+        };
+        fr.readAsArrayBuffer(f);
+      }
+
+      function drawCard() {
+        const c = $("#card");
+        c.replaceChildren();
+        idx = nxt(idx);
+        const done = idx >= msgs.length;
+        const act = msgs.filter((m) => on.has(m.cat)),
+          rv = act.filter((m) => seen.has(m.id)).length;
+        $("#cnt").textContent = done
+          ? "Selesai"
+          : "Pesan " + (rv + 1) + " dari " + act.length;
+        $("#sel").textContent = picked.length + " dipilih";
+        $("#bar").style.width =
+          (act.length ? (rv / act.length) * 100 : 0) + "%";
+        $("#yes").disabled = $("#no").disabled = done;
+        $("#undo").disabled = !hist.length;
+        if (done) {
+          c.append(
+            h("p", { class: "font-semibold" }, "Semua pesan sudah ditinjau."),
+            h(
+              "p",
+              { class: "mu text-sm mt-1" },
+              picked.length + " pesan masuk ke dokumen. Sesuaikan lalu cetak.",
+            ),
+          );
+          return;
+        }
+        const m = msgs[idx];
+        c.append(
+          h(
+            "div",
+            { class: "flex flex-wrap items-center gap-2 mb-3" },
+            h("span", { class: "chip" }, m.cat),
+            h("span", { class: "text-sm font-semibold" }, m.by),
+            h("span", { class: "mu text-xs ml-auto" }, m.date),
+          ),
+          h("p", { class: "whitespace-pre-wrap break-words" }, m.text),
+        );
+      }
+
+      function drawPaper() {
+        const p = $("#paper");
+        p.replaceChildren();
+        const ed = (tag, key, cls) => {
+          const e = h(
+            tag,
+            { contenteditable: "true", class: cls || "" },
+            head[key],
+          );
+          e.oninput = () => (head[key] = e.innerText);
+          return e;
+        };
+        p.append(ed("h1", "title"), ed("div", "sub", "sub"));
+        if (!picked.length) {
+          p.append(
+            h(
+              "p",
+              { style: "text-align:center;color:#888;margin-top:3rem" },
+              "Belum ada pesan. Tekan “Ya” pada pesan yang ingin dimasukkan.",
+            ),
+          );
+          return;
+        }
+        const mk = (it) => {
+          const tx = h(
+            "div",
+            { class: "tx", contenteditable: "true" },
+            it.text,
+          );
+          tx.oninput = () => (it.text = tx.innerText);
+          return h(
+            "div",
+            { class: "it" },
+            h(
+              "div",
+              { class: "ctl" },
+              h(
+                "button",
+                {
+                  class: "ico",
+                  title: "Naik",
+                  "aria-label": "Naik",
+                  onclick: () => move(it, -1),
+                },
+                "↑",
+              ),
+              h(
+                "button",
+                {
+                  class: "ico",
+                  title: "Turun",
+                  "aria-label": "Turun",
+                  onclick: () => move(it, 1),
+                },
+                "↓",
+              ),
+              h(
+                "button",
+                {
+                  class: "ico",
+                  title: "Hapus",
+                  "aria-label": "Hapus",
+                  onclick: () => remove(it),
+                },
+                "✕",
+              ),
+            ),
+            h("div", { class: "by" }, it.by + (it.date ? " · " + it.date : "")),
+            tx,
+          );
+        };
+        PARTS.forEach(([title, kind]) => {
+          const sides = ["ASPA", "ASPI", "Lainnya"].filter(
+            (s) =>
+              s !== "Lainnya" ||
+              picked.some((x) => x.cat === kind + " Lainnya"),
+          );
+          if (!sides.some((s) => picked.some((x) => x.cat === kind + " " + s)))
+            return;
+          p.append(
+            h("h2", {}, title),
+            h(
+              "div",
+              { class: cols === 2 ? "duo" : "" },
+              sides.map((s) => {
+                const list = picked.filter((x) => x.cat === kind + " " + s);
+                return h(
+                  "div",
+                  {},
+                  h("div", { class: "side" }, s),
+                  list.length
+                    ? list.map(mk)
+                    : h("p", { class: "emp" }, "Belum ada"),
+                );
+              }),
+            ),
+          );
+        });
+      }
+
+      function nxt(i) {
+        while (
+          i < msgs.length &&
+          (!on.has(msgs[i].cat) || seen.has(msgs[i].id))
+        )
+          i++;
+        return i;
+      }
+      function drawFilter() {
+        const f = $("#flt");
+        f.replaceChildren();
+        cats.forEach((c) => {
+          const n = msgs.filter((m) => m.cat === c).length,
+            r = msgs.filter((m) => m.cat === c && seen.has(m.id)).length;
+          f.append(
+            h(
+              "button",
+              {
+                class: "btn text-xs",
+                "aria-pressed": on.has(c),
+                onclick: () => {
+                  on.has(c) ? on.delete(c) : on.add(c);
+                  idx = nxt(0);
+                  draw();
+                },
+              },
+              c + " · " + r + "/" + n,
+            ),
+          );
+        });
+      }
+      function draw() {
+        drawFilter();
+        drawCard();
+        drawPaper();
+      }
+      function decide(yes) {
+        idx = nxt(idx);
+        if (idx >= msgs.length) return;
+        const m = msgs[idx];
+        if (yes) picked.push({ ...m });
+        seen.add(m.id);
+        hist.push({ m, yes, i: idx });
+        idx = nxt(idx + 1);
+        draw();
+      }
+      function undo() {
+        const l = hist.pop();
+        if (!l) return;
+        if (l.yes) picked = picked.filter((x) => x.id !== l.m.id);
+        seen.delete(l.m.id);
+        idx = l.i;
+        draw();
+      }
+      function remove(it) {
+        picked = picked.filter((x) => x !== it);
+        drawPaper();
+        $("#sel").textContent = picked.length + " dipilih";
+      }
+      function move(it, d) {
+        const same = picked.filter((x) => x.cat === it.cat),
+          i = same.indexOf(it),
+          o = same[i + d];
+        if (!o) return;
+        const a = picked.indexOf(it),
+          b = picked.indexOf(o);
+        [picked[a], picked[b]] = [picked[b], picked[a]];
+        drawPaper();
+      }
+      function setCols(n) {
+        cols = n;
+        $("#c1").setAttribute("aria-pressed", n === 1);
+        $("#c2").setAttribute("aria-pressed", n === 2);
+        drawPaper();
+      }
+
+      $("#pick").onchange = (e) => load(e.target.files[0]);
+      document.addEventListener("dragover", (e) => e.preventDefault());
+      document.addEventListener("drop", (e) => {
+        e.preventDefault();
+        load(e.dataTransfer.files[0]);
+      });
+      $("#yes").onclick = () => decide(true);
+      $("#no").onclick = () => decide(false);
+      $("#undo").onclick = undo;
+      $("#c1").onclick = () => setCols(1);
+      $("#c2").onclick = () => setCols(2);
+      $("#print").onclick = () => {
+        try {
+          window.print();
+        } catch (e) {
+          alert(
+            "Pencetakan diblokir di tampilan ini. Buka halaman di tab sendiri lalu coba lagi.",
+          );
+        }
+      };
+      document.addEventListener("keydown", (e) => {
+        if (
+          e.target.isContentEditable ||
+          e.ctrlKey ||
+          e.metaKey ||
+          $("#rev").classList.contains("hidden")
+        )
+          return;
+        const k = e.key.toLowerCase();
+        if (k === "y" || k === "arrowright") decide(true);
+        else if (k === "n" || k === "arrowleft") decide(false);
+        else if (k === "z") undo();
+      });
+      drawPaper();
+    </script>
+  </body>
+</html>
